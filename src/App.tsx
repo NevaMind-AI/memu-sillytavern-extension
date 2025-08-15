@@ -1,24 +1,38 @@
-import { useEffect, useState, ChangeEvent } from "react";
-import { FailIcon, LoadingIcon, SaveIcon, SuccessIcon } from "ui/status";
+import { event_types, eventSource } from "@silly-tavern/script.js";
+import { onChatChanged, onChatCompletionPromptReady, onMessageEdited, onMessageReceived, onMessageSwiped } from "memory/exports";
+import { ChangeEvent, CSSProperties, useEffect, useState } from "react";
+import { FailIcon, LoadingIcon, SuccessIcon } from "ui/status";
+import { LOCAL_STORAGE_API_KEY } from "utils/consts";
 import { delay } from "utils/utils";
-import { eventSource, event_types } from "@silly-tavern/script.js";
+
+const buttonStyle: CSSProperties = {
+    height: '100%',
+    borderRadius: 8,
+    width: 36,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    color: 'rgba(0, 0, 0, 0.1)'
+}
 
 function App() {
     const [apiKey, setApiKey] = useState<string>('');
     const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
     useEffect(() => {
-        // console.log('memu-ext-settings', SillyTavern.getContext());
-        try {
-            const saved = localStorage.getItem('memu-api-key');
-            if (saved !== null) setApiKey(saved);
-        } catch { }
+        eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, onChatCompletionPromptReady);
+        eventSource.on(event_types.CHAT_CHANGED, onChatChanged);
+        eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, onMessageReceived);
+        eventSource.on(event_types.MESSAGE_EDITED, onMessageEdited);
+        eventSource.on(event_types.MESSAGE_SWIPED, onMessageSwiped);
     }, []);
 
     useEffect(() => {
-        eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, async function onChatCompletionPromptReady(eventData) {
-            console.log('memu-ext-settings: onChatCompletionPromptReady', eventData);
-        })
+        try {
+            const saved = localStorage.getItem(LOCAL_STORAGE_API_KEY);
+            if (saved !== null) setApiKey(saved);
+        } catch { }
     }, []);
 
     function handleChange(e: ChangeEvent<HTMLInputElement>) {
@@ -30,13 +44,13 @@ function App() {
         setStatus('saving');
         await delay(1500);
         try {
-            localStorage.setItem('memu-api-key', apiKey);
+            localStorage.setItem(LOCAL_STORAGE_API_KEY, apiKey);
             setStatus('saved');
             await delay(1500);
             setStatus('idle');
         } catch {
             setStatus('error');
-            await delay(2000);
+            await delay(1500);
             setStatus('idle');
         }
     }
@@ -48,42 +62,32 @@ function App() {
                     <b>MemU Settings</b>
                     <div className="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
                 </div>
-                <div className="inline-drawer-content" >
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', height: 36 }}>
+                <div className="inline-drawer-content" style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', padding: '0 4px' }}>
+                        <span>API Key</span>
+                        <small>
+                            <span>get your API key from <a href="https://app.memu.so/api-key" target="_blank" rel="noopener noreferrer">here</a></span>
+                        </small>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                         <input
                             type="text"
                             value={apiKey}
                             onChange={handleChange}
+                            className="text_pole"
                             placeholder="memu-api-key"
-                            style={{
-                                flex: 1,
-                                height: '100%',
-                                padding: '0 4px',
-                                border: '1px solid #d0d7de',
-                                borderRadius: 8,
-                                fontSize: 14,
-                                outline: 'none',
-                                color: 'black'
-                            }}
                         />
                         <button
                             onClick={handleSave}
                             className="menu_button"
-                            style={{
-                                height: '100%',
-                                borderRadius: 8,
-                                width: 36,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: 6,
-                                color: 'rgba(0, 0, 0, 0.1)'
-                            }}
+                            style={buttonStyle}
                             disabled={status === 'saving'}
                             aria-busy={status === 'saving'}
                             title={status === 'saving' ? 'Saving' : status === 'saved' ? 'Saved' : 'Save'}
                         >
-                            {status === 'saving' ? <LoadingIcon width={20} height={20} /> : status === 'saved' ? <SuccessIcon width={20} height={20} /> : <SaveIcon width={20} height={20} />}
+                            {status === 'saving' ? <LoadingIcon width={20} height={20} /> :
+                                status === 'saved' ? <SuccessIcon width={20} height={20} /> :
+                                    <i className="fa-fw fa-solid fa-save" style={{ fontSize: 20 }} />}
                         </button>
                         {status === 'error' && (
                             <FailIcon width={20} height={20} />
