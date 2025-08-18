@@ -1,6 +1,6 @@
-import { getContext } from "@silly-tavern/scripts/st-context.js";
-import { restoreHistory, upsertFromStMessage } from "./record";
 import { ChatInfo } from "./types";
+import { summaryIfNeed } from "./memorize";
+import { st } from "utils/context-extra";
 
 export let chatInfo: ChatInfo = {};
 
@@ -11,7 +11,7 @@ export function onMessageReceived(msgIdAny: any) {
     const msgId = parseInt(msgIdAny);
     console.log('memu-ext: onMessageReceived: ', chatInfo.chat[msgId]);
     // 异步写入消息存储
-    try { void upsertFromStMessage(msgId); } catch { }
+    try { void summaryIfNeed(); } catch { }
 }
 
 export function onMessageEdited(msgIdAny: any) {
@@ -20,7 +20,7 @@ export function onMessageEdited(msgIdAny: any) {
     }
     const msgId = parseInt(msgIdAny);
     console.log('memu-ext: onMessageEdited: ', chatInfo.chat[msgId]);
-    try { void upsertFromStMessage(msgId); } catch { }
+    try { void summaryIfNeed(); } catch { }
 }
 
 export function onMessageSwiped(msgIdAny: any) {
@@ -29,29 +29,26 @@ export function onMessageSwiped(msgIdAny: any) {
     }
     const msgId = parseInt(msgIdAny);
     console.log('memu-ext: onMessageSwiped: ', chatInfo.chat[msgId]);
-    try { void upsertFromStMessage(msgId); } catch { }
+    try { void summaryIfNeed(); } catch { }
 }
 
 export function onChatCompletionPromptReady(eventData) {
-
+    console.log('memu-ext: onChatCompletionPromptReady', eventData);
 }
 
 export function onChatChanged() {
-    const ctx = getContext();
+    const ctx = st.getContext();
     const chatId = String(ctx.getCurrentChatId());
-    console.log('memu-ext: onChatChanged', chatId);
+    console.log('memu-ext: onChatChanged', chatId, ctx);
 
     chatInfo.chat = ctx.chat;
     chatInfo.chatId = chatId;
     chatInfo.userName = ctx.name1;
-    chatInfo.characterId = ctx.characters.find((c) => c.name === ctx.name2)?.map((c) => {
-        return `${c.name} - ${c.create_date}`
-    });
-    chatInfo.characterName = ctx.name2;
+    const character = ctx.characters.find((c) => c.name === ctx.name2);
+    if (character) {
+        chatInfo.characterId = `${character.name} - ${character.create_date}`;
+        chatInfo.characterName = character.name;
+    }
 
-    restoreHistory(chatId).then(() => {
-
-    }).catch((err) => {
-        console.error('memu-ext: onChatChanged: restoreHistory: ', err);
-    });
+    try { void summaryIfNeed(); } catch { }
 }

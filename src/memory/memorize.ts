@@ -1,14 +1,14 @@
-import { max_context } from "@silly-tavern/script.js";
+import { MemuClient } from 'memu-js';
 import { LOCAL_STORAGE_API_KEY } from "utils/consts";
-import { sumTokensByChatId } from "./utils";
-import { MemuClient, MemorizeResponse } from 'memu-js';
-import { chatInfo } from "./exports";
+import { memuExtras, st } from "utils/context-extra";
+import { sumTokens } from "./utils";
 
 
-export async function summaryIfNeed(chat_id: string) {
-    const total = sumTokensByChatId(chat_id);
-    console.log('memu-ext: now token accumulated: %d, max context: %d', total, max_context);
-    if (total < max_context) {
+export async function summaryIfNeed() {
+    const from = memuExtras.summary?.lastSummaryId ?? 0;
+    const total = await sumTokens(from);
+    console.log('memu-ext: now token accumulated: %d, max context: %d', total, st.getChatMaxContextLength());
+    if (total < st.getChatMaxContextLength()) {
         return;
     }
     const apiKey = localStorage.getItem(LOCAL_STORAGE_API_KEY);
@@ -25,9 +25,9 @@ export async function summaryIfNeed(chat_id: string) {
         maxRetries: 3
     });
 
-    const response = await client.memorize({
-        chatId: chat_id,
-        userName: chatInfo.userName,
-        characterName: chatInfo.characterName,
-    });
+    // const response = await client.memorize({
+    //     chatId: chat_id,
+    //     userName: chatInfo.userName,
+    //     characterName: chatInfo.characterName,
+    // });
 }
