@@ -1,15 +1,29 @@
-import { getContext } from "@silly-tavern/scripts/st-context.js";
 import { getMaxContextSize, saveChat } from "@silly-tavern/script.js";
-// import { oai_settings } from "@silly-tavern/scripts/openai.js";
+import { getContext } from "@silly-tavern/scripts/st-context.js";
+import { event_types, eventSource } from "@silly-tavern/script.js";
+import { debounce_timeout } from "@silly-tavern/scripts/constants.js";
+import { debounce } from "@silly-tavern/scripts/utils.js";
+import { MEMU_LOCAL_STORAGE_API_KEY } from "./consts";
 import { MemuBaseInfo, MemuExtras, MemuRetrieve, MemuSummary } from "./types";
 
 const originExtras: MemuExtras = {}
 
 export const st = {
     getContext: () => getContext(),
-    getChatMaxContextSize: getMaxContextSize,
+    getChatMaxContextSize: () => Math.floor(getMaxContextSize() * 0.9),
 
-    saveChat: async () => await saveChat()
+    saveChat: async () => await saveChat(),
+
+    debounce: debounce,
+    debounce_timeout: debounce_timeout,
+
+    event_types: event_types,
+    eventSource: eventSource,
+}
+
+export const API_KEY = {
+    get: () => localStorage.getItem(MEMU_LOCAL_STORAGE_API_KEY),
+    set: (value: string) => localStorage.setItem(MEMU_LOCAL_STORAGE_API_KEY, value),
 }
 
 export const memuExtras = new Proxy<MemuExtras>(originExtras, {
@@ -19,7 +33,7 @@ export const memuExtras = new Proxy<MemuExtras>(originExtras, {
             case 'baseInfo':
                 return (st.getContext().chatMetadata.memuExtras as MemuExtras).baseInfo;
             case 'retrieve':
-                return (st.getContext().chatMetadata.memuExtras as MemuExtras).retrieve ?? {};
+                return (st.getContext().chatMetadata.memuExtras as MemuExtras).retrieve;
             case 'summary':
                 return (st.getContext().chatMetadata.memuExtras as MemuExtras).summary;
             default:

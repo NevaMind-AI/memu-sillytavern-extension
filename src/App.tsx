@@ -1,8 +1,7 @@
-import { event_types, eventSource } from "@silly-tavern/script.js";
 import { onChatChanged, onChatCompletionPromptReady, onMessageEdited, onMessageReceived, onMessageSwiped } from "memory/exports";
 import { ChangeEvent, CSSProperties, useEffect, useState } from "react";
 import { FailIcon, LoadingIcon, SuccessIcon } from "ui/status";
-import { LOCAL_STORAGE_API_KEY } from "utils/consts";
+import { API_KEY, st } from "utils/context-extra";
 import { delay } from "utils/utils";
 
 const buttonStyle: CSSProperties = {
@@ -21,16 +20,16 @@ function App() {
     const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
     useEffect(() => {
-        eventSource.on(event_types.CHAT_COMPLETION_PROMPT_READY, onChatCompletionPromptReady);
-        eventSource.on(event_types.CHAT_CHANGED, onChatChanged);
-        eventSource.on(event_types.CHARACTER_MESSAGE_RENDERED, onMessageReceived);
-        eventSource.on(event_types.MESSAGE_EDITED, onMessageEdited);
-        eventSource.on(event_types.MESSAGE_SWIPED, onMessageSwiped);
+        st.eventSource.on(st.event_types.CHAT_COMPLETION_PROMPT_READY, onChatCompletionPromptReady);
+        st.eventSource.on(st.event_types.CHAT_CHANGED, onChatChanged);
+        st.eventSource.on(st.event_types.CHARACTER_MESSAGE_RENDERED, onMessageReceived);
+        st.eventSource.on(st.event_types.MESSAGE_EDITED, onMessageEdited);
+        st.eventSource.on(st.event_types.MESSAGE_SWIPED, onMessageSwiped);
     }, []);
 
     useEffect(() => {
         try {
-            const saved = localStorage.getItem(LOCAL_STORAGE_API_KEY);
+            const saved = API_KEY.get();
             if (saved !== null) setApiKey(saved);
         } catch { }
     }, []);
@@ -40,11 +39,12 @@ function App() {
         setStatus('idle');
     }
 
+    // todo: check available
     async function handleSave() {
         setStatus('saving');
         await delay(1500);
         try {
-            localStorage.setItem(LOCAL_STORAGE_API_KEY, apiKey);
+            API_KEY.set(apiKey);
             setStatus('saved');
             await delay(1500);
             setStatus('idle');

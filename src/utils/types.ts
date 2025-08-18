@@ -12,7 +12,7 @@ export interface MemuBaseInfo {
 
 export interface MemuRetrieve {
     nowRetrieve?: MemuRetrieveHistory;
-    history?: MemuRetrieveHistory[];
+    history: MemuRetrieveHistory[];
 }
 
 export interface MemuRetrieveHistory {

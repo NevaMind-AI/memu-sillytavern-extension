@@ -1,12 +1,12 @@
 export interface ConversationData {
-    messages: ConvMessage[];
+    messages: ConversationMessage[];
     userName: string;
     userId: string;
     characterName: string;
     characterId: string;
 }
 
-export interface ConvMessage {
+export interface ConversationMessage {
     role: 'user' | 'assistant' | 'participant';
     content: string;
     name?: string;

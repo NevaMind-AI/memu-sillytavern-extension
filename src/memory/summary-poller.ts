@@ -1,7 +1,7 @@
 import { MemuClient } from 'memu-js';
-import { memuExtras, st } from 'utils/context-extra';
-import { LOCAL_STORAGE_API_KEY } from 'utils/consts';
-import { doSummary } from './utils';
+import { MEMU_BASE_URL, MEMU_DEFAULT_MAX_RETRIES } from 'utils/consts';
+import { API_KEY, memuExtras, st } from 'utils/context-extra';
+import { doSummary } from './memorize';
 
 const DEFAULT_INTERVAL_MS = 10_000;
 
@@ -20,7 +20,7 @@ export function startSummaryPolling(intervalMs: number = DEFAULT_INTERVAL_MS): v
 }
 
 export function stopSummaryPolling(): void {
-    if (!pollerTimer) {
+    if (pollerTimer) {
         clearInterval(pollerTimer);
         pollerTimer = undefined;
     }
@@ -29,7 +29,7 @@ export function stopSummaryPolling(): void {
 
 async function tick(): Promise<void> {
     try {
-        const apiKey = localStorage.getItem(LOCAL_STORAGE_API_KEY);
+        const apiKey = API_KEY.get();
         if (!apiKey) {
             console.debug('memu-ext: summary-poller tick: apiKey is null, should set key first');
             return;
@@ -77,16 +77,18 @@ function fireAndUpdateTaskStatus(apiKey: string, range: [number, number], taskId
     }
 
     const client = new MemuClient({
-        baseUrl: 'https://api.memu.so',
+        baseUrl: MEMU_BASE_URL,
         apiKey,
         timeout: DEFAULT_INTERVAL_MS / 2,
-        maxRetries: 3,
+        maxRetries: MEMU_DEFAULT_MAX_RETRIES,
     });
 
     client.getTaskStatus(taskId as string)
         .then(async (resp: any) => {
             const raw = String(resp?.status ?? '').toUpperCase();
-            const mapped = raw === 'SUCCESS' ? 'SUCCESS' : raw === 'PENDING' ? 'PENDING' : 'FAILURE';
+            const mapped = raw === 'SUCCESS' ? 'SUCCESS' :
+                raw === 'PENDING' ? 'PENDING' :
+                    'FAILURE';
             // update summary value, do not do other logic
             memuExtras.summary = {
                 summaryRange: range,

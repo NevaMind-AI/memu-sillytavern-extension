@@ -1,44 +1,51 @@
 import { st } from "utils/context-extra";
-import { initChatExtraInfo } from "./extra-utils";
+import { initChatExtraInfo } from "./utils";
 import { summaryIfNeed } from "./memorize";
 import { setIsTerminated, startSummaryPolling, stopSummaryPolling } from "./summary-poller";
 
-export function onMessageReceived(msgIdAny: any) {
+const summaryIfNeedDebounced = st.debounce(() => {
+    try {
+        void summaryIfNeed();
+    } catch { }
+}, st.debounce_timeout.extended);
+
+export function onMessageReceived(msgIdAny: any): void {
     const msgId = parseInt(msgIdAny);
     console.log('memu-ext: onMessageReceived: ', st.getContext().chat[msgId]);
-    try { void summaryIfNeed(); } catch { }
+    summaryIfNeedDebounced();
 }
 
-export function onMessageEdited(msgIdAny: any) {
+export function onMessageEdited(msgIdAny: any): void {
     const msgId = parseInt(msgIdAny);
     console.log('memu-ext: onMessageEdited: ', st.getContext().chat[msgId]);
-    try { void summaryIfNeed(); } catch { }
+    summaryIfNeedDebounced();
 }
 
-export function onMessageSwiped(msgIdAny: any) {
+export function onMessageSwiped(msgIdAny: any): void {
     const msgId = parseInt(msgIdAny);
     console.log('memu-ext: onMessageSwiped: ', st.getContext().chat[msgId]);
-    try { void summaryIfNeed(); } catch { }
+    summaryIfNeedDebounced();
 }
 
-export function onChatCompletionPromptReady(eventData) {
+export function onChatCompletionPromptReady(eventData: any): void {
     console.log('memu-ext: onChatCompletionPromptReady', eventData);
 }
 
-export function onChatChanged() {
+export function onChatChanged(): void {
     const ctx = st.getContext();
-    const chatId = String(ctx.getCurrentChatId());
-    console.log('memu-ext: onChatChanged', chatId, ctx);
+    console.log('memu-ext: onChatChanged, chatId:', ctx.getCurrentChatId(), ctx);
 
-    if (chatId === undefined) {
+    if (ctx.getCurrentChatId() === undefined) {
         stopSummaryPolling();
+        console.log('memu-ext: onChatChanged: chatId is undefined, stop summary polling');
     } else {
         async function init() {
             try {
                 setIsTerminated(false);
                 await initChatExtraInfo(ctx);
-                await summaryIfNeed();
+                summaryIfNeedDebounced();
                 startSummaryPolling();
+                console.log('memu-ext: onChatChanged: chatId is defined, start summary polling');
             } catch { }
         }
         void init();
