@@ -10,7 +10,7 @@ const originExtras: MemuExtras = {}
 
 export const st = {
     getContext: () => getContext(),
-    getChatMaxContextSize: () => Math.floor(getMaxContextSize() * 0.9),
+    getChatMaxContextSize: () => getMaxContextSize(),
 
     saveChat: async () => await saveChat(),
 
