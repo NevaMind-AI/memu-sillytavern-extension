@@ -1,21 +1,28 @@
 export interface MemuExtras {
+    baseInfo?: MemuBaseInfo;
     summary?: MemuSummary;
     retrieve?: MemuRetrieve;
 }
 
+export interface MemuBaseInfo {
+    characterId: string;
+    characterName: string;
+    userName: string;
+}
+
 export interface MemuRetrieve {
-    content?: string;
+    nowRetrieve?: MemuRetrieveHistory;
     history?: MemuRetrieveHistory[];
 }
 
 export interface MemuRetrieveHistory {
-    lastSummaryId?: number;
+    summaryRange?: [number, number];
+    summaryTaskId?: string;
     summary?: string;
-    content?: string;
 }
 
 export interface MemuSummary {
-    lastSummaryId?: number;
-    summaryTaskStatus?: 'running' | 'completed' | 'failed';
+    summaryRange: [number, number];
     summaryTaskId?: string;
+    summaryTaskStatus: 'PENDING' | 'SUCCESS' | 'FAILURE';
 }

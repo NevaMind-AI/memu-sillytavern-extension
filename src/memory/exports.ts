@@ -1,34 +1,23 @@
-import { ChatInfo } from "./types";
-import { summaryIfNeed } from "./memorize";
 import { st } from "utils/context-extra";
-
-export let chatInfo: ChatInfo = {};
+import { initChatExtraInfo } from "./extra-utils";
+import { summaryIfNeed } from "./memorize";
+import { setIsTerminated, startSummaryPolling, stopSummaryPolling } from "./summary-poller";
 
 export function onMessageReceived(msgIdAny: any) {
-    if (chatInfo.chat == null) {
-        return;
-    }
     const msgId = parseInt(msgIdAny);
-    console.log('memu-ext: onMessageReceived: ', chatInfo.chat[msgId]);
-    // 异步写入消息存储
+    console.log('memu-ext: onMessageReceived: ', st.getContext().chat[msgId]);
     try { void summaryIfNeed(); } catch { }
 }
 
 export function onMessageEdited(msgIdAny: any) {
-    if (chatInfo.chat == null) {
-        return;
-    }
     const msgId = parseInt(msgIdAny);
-    console.log('memu-ext: onMessageEdited: ', chatInfo.chat[msgId]);
+    console.log('memu-ext: onMessageEdited: ', st.getContext().chat[msgId]);
     try { void summaryIfNeed(); } catch { }
 }
 
 export function onMessageSwiped(msgIdAny: any) {
-    if (chatInfo.chat == null) {
-        return;
-    }
     const msgId = parseInt(msgIdAny);
-    console.log('memu-ext: onMessageSwiped: ', chatInfo.chat[msgId]);
+    console.log('memu-ext: onMessageSwiped: ', st.getContext().chat[msgId]);
     try { void summaryIfNeed(); } catch { }
 }
 
@@ -41,14 +30,17 @@ export function onChatChanged() {
     const chatId = String(ctx.getCurrentChatId());
     console.log('memu-ext: onChatChanged', chatId, ctx);
 
-    chatInfo.chat = ctx.chat;
-    chatInfo.chatId = chatId;
-    chatInfo.userName = ctx.name1;
-    const character = ctx.characters.find((c) => c.name === ctx.name2);
-    if (character) {
-        chatInfo.characterId = `${character.name} - ${character.create_date}`;
-        chatInfo.characterName = character.name;
+    if (chatId === undefined) {
+        stopSummaryPolling();
+    } else {
+        async function init() {
+            try {
+                setIsTerminated(false);
+                await initChatExtraInfo(ctx);
+                await summaryIfNeed();
+                startSummaryPolling();
+            } catch { }
+        }
+        void init();
     }
-
-    try { void summaryIfNeed(); } catch { }
 }
