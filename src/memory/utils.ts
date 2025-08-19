@@ -21,11 +21,12 @@ export async function initChatExtraInfo(ctx: any): Promise<void> {
 
 export async function sumTokens(from: number): Promise<number> {
 	const chat = st.getContext().chat;
-	if (chat == null || chat.length <= from) {
+    // length - 1 to avoid case where the last message is continued
+	if (chat == null || chat.length - 1 <= from) {
 		return 0;
 	}
 	let sum = 0;
-	for (let i = from; i < chat.length; i++) {
+	for (let i = from; i < chat.length - 1; i++) {
 		const message = chat[i];
 		const text = message.mes;
 		if (text == null || typeof text !== 'string') {

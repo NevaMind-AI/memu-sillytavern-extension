@@ -1,3 +1,10 @@
+export enum MemuTaskStatus {
+    PENDING = 'PENDING',
+    PROCESSING = 'PROCESSING',
+    SUCCESS = 'SUCCESS',
+    FAILURE = 'FAILURE',
+}
+
 export interface MemuExtras {
     baseInfo?: MemuBaseInfo;
     summary?: MemuSummary;
@@ -22,7 +29,22 @@ export interface MemuRetrieveHistory {
 }
 
 export interface MemuSummary {
+    // [from, to)
     summaryRange: [number, number];
     summaryTaskId?: string;
-    summaryTaskStatus: 'PENDING' | 'SUCCESS' | 'FAILURE';
+    summaryTaskStatus: MemuTaskStatus;
+}
+
+export interface ConversationData {
+    messages: ConversationMessage[];
+    userName: string;
+    userId: string;
+    characterName: string;
+    characterId: string;
+}
+
+export interface ConversationMessage {
+    role: 'user' | 'assistant' | 'participant';
+    content: string;
+    name?: string;
 }

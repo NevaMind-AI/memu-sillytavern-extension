@@ -1,9 +1,8 @@
-import { CategoryResponse, MemuClient } from "memu-js";
+import { CategoryResponse } from "memu-js";
 import { API_KEY, memuExtras, st } from "utils/context-extra";
-import { ConversationMessage } from "./types";
+import { memorizeConversation, retrieveDefaultCategories } from "utils/network";
+import { ConversationMessage, MemuSummary, MemuTaskStatus } from "utils/types";
 import { sumTokens } from "./utils";
-import { MEMU_BASE_URL, MEMU_DEFAULT_MAX_RETRIES, MEMU_DEFAULT_TIMEOUT } from "utils/consts";
-import { MemuSummary } from "utils/types";
 
 
 export async function summaryIfNeed(): Promise<void> {
@@ -16,7 +15,7 @@ export async function summaryIfNeed(): Promise<void> {
         return;
     }
 
-    await doSummary(from, chat.length);
+    await doSummary(from, chat.length - 1);
 }
 
 export async function doSummary(from: number, to: number): Promise<void> {
@@ -26,39 +25,36 @@ export async function doSummary(from: number, to: number): Promise<void> {
         console.log('memu-ext: API key is not set');
         return;
     }
+    if (memuExtras.baseInfo == null) {
+        console.log('memu-ext: baseInfo not found');
+        return;
+    }
     console.log('memu-ext: trigger memorize summary');
 
-    const client = new MemuClient({
-        baseUrl: MEMU_BASE_URL,
-        apiKey: apiKey,
-        timeout: MEMU_DEFAULT_TIMEOUT,
-        maxRetries: MEMU_DEFAULT_MAX_RETRIES
-    });
-
     try {
-        const response = await client.memorizeConversation(
-            prepareConversationData(),
-            memuExtras.baseInfo.userName,
-            memuExtras.baseInfo.userName,
-            memuExtras.baseInfo.characterId,
-            memuExtras.baseInfo.characterName,
+        const response = await memorizeConversation(
+            apiKey,
+            {
+                messages: prepareConversationData(),
+                userId: memuExtras.baseInfo.userName,
+                userName: memuExtras.baseInfo.userName,
+                characterId: memuExtras.baseInfo.characterId,
+                characterName: memuExtras.baseInfo.characterName,
+            },
         );
         console.log('memu-ext: memorize response', response);
 
-        const statusRaw = response.status.toLowerCase();
         memuExtras.summary = {
             summaryRange: [from, to],
             summaryTaskId: response.taskId,
-            summaryTaskStatus: statusRaw === 'success' ? 'SUCCESS' :
-                statusRaw === 'pending' ? 'PENDING' :
-                    'FAILURE',
+            summaryTaskStatus: MemuTaskStatus.PENDING
         };
         await st.saveChat();
     } catch (error) {
         memuExtras.summary = {
             summaryRange: [from, to],
             summaryTaskId: null,
-            summaryTaskStatus: 'FAILURE',
+            summaryTaskStatus: MemuTaskStatus.FAILURE,
         };
         await st.saveChat();
         console.error('memu-ext: memorize failed', error);
@@ -73,17 +69,12 @@ export async function retrieveMemories(summary: MemuSummary): Promise<void> {
     }
     console.log('memu-ext: trigger retrieve memories');
     try {
-        const client = new MemuClient({
-            baseUrl: MEMU_BASE_URL,
-            apiKey: apiKey,
-            timeout: MEMU_DEFAULT_TIMEOUT,
-            maxRetries: MEMU_DEFAULT_MAX_RETRIES
-        });
-        const response = await client.retrieveDefaultCategories({
-            userId: memuExtras.baseInfo.userName,
-            agentId: memuExtras.baseInfo.characterId,
-            includeInactive: false,
-        });
+        const response = await retrieveDefaultCategories(
+            apiKey,
+            memuExtras.baseInfo.userName,
+            memuExtras.baseInfo.characterId,
+            false,
+        );
         console.log('memu-ext: retrieve memories response', response);
         const retrieve = memuExtras.retrieve ?? {
             history: [],
@@ -101,6 +92,7 @@ export async function retrieveMemories(summary: MemuSummary): Promise<void> {
         await st.saveChat();
     } catch (error) {
         console.error('memu-ext: retrieve memories failed', error);
+        throw error;
     }
 }
 

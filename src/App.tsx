@@ -12,7 +12,6 @@ const buttonStyle: CSSProperties = {
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    color: 'rgba(0, 0, 0, 0.1)'
 }
 
 function App() {
