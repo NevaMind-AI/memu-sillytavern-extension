@@ -1,7 +1,7 @@
 import { CategoryResponse } from "memu-js";
-import { API_KEY, memuExtras, st } from "utils/context-extra";
+import { API_KEY, memuExtras, st, Message, MessageCollection } from "utils/context-extra";
 import { memorizeConversation, retrieveDefaultCategories } from "utils/network";
-import { ConversationMessage, MemuSummary, MemuTaskStatus } from "utils/types";
+import { ConversationMessage, MemuSummary, MemuTaskStatus, STEventData } from "utils/types";
 import { sumTokens } from "./utils";
 
 
@@ -47,7 +47,8 @@ export async function doSummary(from: number, to: number): Promise<void> {
         memuExtras.summary = {
             summaryRange: [from, to],
             summaryTaskId: response.taskId,
-            summaryTaskStatus: MemuTaskStatus.PENDING
+            summaryTaskStatus: MemuTaskStatus.PENDING,
+            isReady: false,
         };
         await st.saveChat();
     } catch (error) {
@@ -55,6 +56,7 @@ export async function doSummary(from: number, to: number): Promise<void> {
             summaryRange: [from, to],
             summaryTaskId: null,
             summaryTaskStatus: MemuTaskStatus.FAILURE,
+            isReady: false,
         };
         await st.saveChat();
         console.error('memu-ext: memorize failed', error);
@@ -94,6 +96,65 @@ export async function retrieveMemories(summary: MemuSummary): Promise<void> {
         console.error('memu-ext: retrieve memories failed', error);
         throw error;
     }
+}
+
+export function addSummaryToPrompt(eventData: STEventData, replaceSystem: boolean = true): void {
+    const memuSummary = memuExtras.retrieve?.nowRetrieve?.summary;
+    if (!memuSummary) {
+        console.log('memu-ext: no memu summary found');
+        return;
+    }
+    if (replaceSystem) {
+        const summary = findSystemSummary(st.promptManager.messages);
+        if (summary) {
+            console.log('memu-ext: found system summary', summary);
+            replaceSystemSummary(summary, memuSummary, eventData);
+            return;
+        }
+    }
+    addSummary(memuSummary, eventData);
+}
+
+function replaceSystemSummary(summary: string, memuSummary: string, eventData: STEventData): void {
+    eventData.chat.forEach(msg => {
+        if (msg.content === summary) {
+            console.log('memu-ext: found system summary in prompt', msg);
+            msg.content = memuSummary;
+            return;
+        }
+    });
+}
+
+function addSummary(memuSummary: string, eventData: STEventData): void {
+    eventData.chat.unshift({
+        role: 'system',
+        content: memuSummary,
+    });
+    console.log('memu-ext: added memu summary to', eventData);
+}
+
+/**
+ * @copy from @silly-tavern/scripts/openai.js
+ *
+ * Retrieves the chat as a flattened array of messages.
+ * @returns {Array} The chat messages.
+ */
+function findSystemSummary(messages: MessageCollection): string {
+    for (let item of messages.collection) {
+        if (item instanceof MessageCollection) {
+            const summary = findSystemSummary(item);
+            if (summary) {
+                return summary;
+            }
+        } else if (item instanceof Message && item.content) {
+            if (item.identifier === 'summary') {
+                return item.content;
+            }
+        } else {
+            console.log(`Skipping invalid or empty message in collection: ${JSON.stringify(item)}`);
+        }
+    }
+    return null;
 }
 
 function parseSummary(categories: CategoryResponse[]): string {

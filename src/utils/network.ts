@@ -1,4 +1,4 @@
-import { DefaultCategoriesResponse, MemorizeResponse, MemorizeTaskStatusResponse } from "memu-js";
+import { DefaultCategoriesResponse, MemorizeResponse, MemorizeTaskStatusResponse, MemorizeTaskSummaryReadyResponse } from "memu-js";
 import { ConversationData } from "utils/types";
 
 const ROUTER_BASE_URL = '/api/plugins/memu'
@@ -10,6 +10,21 @@ export async function getTaskStatus(
 ): Promise<MemorizeTaskStatusResponse> {
     return request<MemorizeTaskStatusResponse>(
         '/getTaskStatus',
+        {
+            apiKey: apiKey,
+            timeout: timeout,
+            taskId: taskId,
+        },
+    );
+}
+
+export async function getTaskSummaryReady(
+    apiKey: string,
+    timeout: number,
+    taskId: string,
+): Promise<MemorizeTaskSummaryReadyResponse> {
+    return request<MemorizeTaskSummaryReadyResponse>(
+        '/getTaskSummaryReady',
         {
             apiKey: apiKey,
             timeout: timeout,

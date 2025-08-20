@@ -1,6 +1,6 @@
 import { MEMU_DEFAULT_TIMEOUT } from 'utils/consts';
 import { API_KEY, memuExtras, st } from 'utils/context-extra';
-import { getTaskStatus } from 'utils/network';
+import { getTaskStatus, getTaskSummaryReady } from 'utils/network';
 import { MemuTaskStatus } from 'utils/types';
 import { doSummary, retrieveMemories } from './memorize';
 
@@ -58,6 +58,11 @@ async function tick(): Promise<void> {
                         console.log('memu-ext: summary-poller tick: retrieve data is already retrieved, do nothing');
                         break;
                     }
+                    if (summary.isReady !== true) {
+                        updateTaskSummaryStatus(apiKey, summary.summaryTaskId);
+                        console.log('memu-ext: summary-poller tick: summary is success, update task summary status', summary.summaryTaskId);
+                        break;
+                    }
                     await retrieveMemories(summary);
                     console.log('memu-ext: summary-poller tick: summary is success, retrieve memories');
                 } catch (error) {
@@ -83,6 +88,24 @@ async function tick(): Promise<void> {
     } catch (error) {
         console.error('memu-ext: summary-poller tick error', error);
     }
+}
+
+function updateTaskSummaryStatus(apiKey: string, taskId?: string | null): void {
+    if (!taskId) {
+        console.error('memu-ext: updateTaskSummaryStatus: taskId is null');
+        return;
+    }
+    getTaskSummaryReady(apiKey, DEFAULT_INTERVAL_MS / 2, taskId)
+        .then(async (resp) => {
+            console.log('memu-ext: updateTaskSummaryStatus: resp', resp);
+            if (memuExtras.summary) {
+                memuExtras.summary.isReady = resp.allReady === true;
+                await st.saveChat();
+            }
+        })
+        .catch((err) => {
+            console.error('memu-ext: getTaskSummaryReady failed', err);
+        });
 }
 
 function fireAndUpdateTaskStatus(apiKey: string, range: [number, number], taskId?: string | null): void {
@@ -114,6 +137,7 @@ function fireAndUpdateTaskStatus(apiKey: string, range: [number, number], taskId
                 summaryRange: range,
                 summaryTaskId: taskId,
                 summaryTaskStatus: mapped,
+                isReady: false,
             };
             await st.saveChat();
         })

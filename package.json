@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "memu-js": "^0.1.8",
+    "memu-js": "^0.1.9",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "toastr": "^2.1.4"

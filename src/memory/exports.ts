@@ -1,7 +1,7 @@
-import { st } from "utils/context-extra";
-import { initChatExtraInfo } from "./utils";
-import { summaryIfNeed } from "./memorize";
+import { OVERRIDE_SUMMARIZER, st } from "utils/context-extra";
+import { addSummaryToPrompt, summaryIfNeed } from "./memorize";
 import { setIsTerminated, startSummaryPolling, stopSummaryPolling } from "./summary-poller";
+import { initChatExtraInfo } from "./utils";
 
 const summaryIfNeedDebounced = st.debounce(() => {
     try {
@@ -29,6 +29,7 @@ export function onMessageSwiped(msgIdAny: any): void {
 
 export function onChatCompletionPromptReady(eventData: any): void {
     console.log('memu-ext: onChatCompletionPromptReady', eventData);
+    addSummaryToPrompt(eventData, OVERRIDE_SUMMARIZER.get());
 }
 
 export function onChatChanged(): void {

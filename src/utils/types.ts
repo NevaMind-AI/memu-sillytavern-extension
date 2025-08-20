@@ -33,6 +33,8 @@ export interface MemuSummary {
     summaryRange: [number, number];
     summaryTaskId?: string;
     summaryTaskStatus: MemuTaskStatus;
+    // the summary content in retrieve task is ready
+    isReady?: boolean;
 }
 
 export interface ConversationData {
@@ -47,4 +49,14 @@ export interface ConversationMessage {
     role: 'user' | 'assistant' | 'participant';
     content: string;
     name?: string;
+}
+
+export interface STEventData {
+    chat: STEventDataMsg[];
+    dryRun: boolean;
+}
+
+export interface STEventDataMsg {
+    role: 'user' | 'assistant' | 'system';
+    content: string;
 }

@@ -1,9 +1,9 @@
-import { getMaxContextSize, saveChat } from "@silly-tavern/script.js";
-import { getContext } from "@silly-tavern/scripts/st-context.js";
-import { event_types, eventSource } from "@silly-tavern/script.js";
+import { event_types, eventSource, getMaxContextSize, saveChat } from "@silly-tavern/script.js";
 import { debounce_timeout } from "@silly-tavern/scripts/constants.js";
+import { promptManager, Message, MessageCollection } from "@silly-tavern/scripts/openai.js";
+import { getContext } from "@silly-tavern/scripts/st-context.js";
 import { debounce } from "@silly-tavern/scripts/utils.js";
-import { MEMU_LOCAL_STORAGE_API_KEY } from "./consts";
+import { MEMU_LOCAL_STORAGE_API_KEY, MEMU_LOCAL_STORAGE_OVERRIDE_SUMMARIZER } from "./consts";
 import { MemuBaseInfo, MemuExtras, MemuRetrieve, MemuSummary } from "./types";
 
 const originExtras: MemuExtras = {}
@@ -19,11 +19,23 @@ export const st = {
 
     event_types: event_types,
     eventSource: eventSource,
+
+    promptManager: promptManager,
+}
+
+export {
+    Message,
+    MessageCollection,
 }
 
 export const API_KEY = {
     get: () => localStorage.getItem(MEMU_LOCAL_STORAGE_API_KEY),
     set: (value: string) => localStorage.setItem(MEMU_LOCAL_STORAGE_API_KEY, value),
+}
+
+export const OVERRIDE_SUMMARIZER = {
+    get: () => localStorage.getItem(MEMU_LOCAL_STORAGE_OVERRIDE_SUMMARIZER) !== 'false',
+    set: (value: boolean) => localStorage.setItem(MEMU_LOCAL_STORAGE_OVERRIDE_SUMMARIZER, value.toString()),
 }
 
 export const memuExtras = new Proxy<MemuExtras>(originExtras, {

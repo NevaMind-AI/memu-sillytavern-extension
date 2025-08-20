@@ -1,7 +1,7 @@
 import { onChatChanged, onChatCompletionPromptReady, onMessageEdited, onMessageReceived, onMessageSwiped } from "memory/exports";
 import { ChangeEvent, CSSProperties, useEffect, useState } from "react";
 import { FailIcon, LoadingIcon, SuccessIcon } from "ui/status";
-import { API_KEY, st } from "utils/context-extra";
+import { API_KEY, OVERRIDE_SUMMARIZER, st } from "utils/context-extra";
 import { delay } from "utils/utils";
 
 const buttonStyle: CSSProperties = {
@@ -17,6 +17,7 @@ const buttonStyle: CSSProperties = {
 function App() {
     const [apiKey, setApiKey] = useState<string>('');
     const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+    const [overrideSummarizer, setOverrideSummarizer] = useState<boolean>(false);
 
     useEffect(() => {
         st.eventSource.on(st.event_types.CHAT_COMPLETION_PROMPT_READY, onChatCompletionPromptReady);
@@ -31,6 +32,11 @@ function App() {
             const saved = API_KEY.get();
             if (saved !== null) setApiKey(saved);
         } catch { }
+    }, []);
+
+    useEffect(() => {
+        const saved = OVERRIDE_SUMMARIZER.get();
+        if (saved !== null) setOverrideSummarizer(saved);
     }, []);
 
     function handleChange(e: ChangeEvent<HTMLInputElement>) {
@@ -52,6 +58,11 @@ function App() {
             await delay(1500);
             setStatus('idle');
         }
+    }
+
+    function handleOverrideSummarizerChange(e: ChangeEvent<HTMLInputElement>) {
+        setOverrideSummarizer(e.target.checked);
+        OVERRIDE_SUMMARIZER.set(e.target.checked);
     }
 
     return (
@@ -92,6 +103,17 @@ function App() {
                             <FailIcon width={20} height={20} />
                         )}
                     </div>
+                </div>
+                <hr />
+                <div className="flex-container">
+                    <div style={{ display: 'flex', flexDirection: 'column', padding: '0 4px' }}>
+                        <span>Memory</span>
+                    </div>
+                    <label className="checkbox_label expander" htmlFor="override_summarizer" title="Override Summarizer">
+                        <input id="override_summarizer" type="checkbox" className="checkbox" checked={overrideSummarizer} onChange={handleOverrideSummarizerChange} />
+                        <span>Override Summarizer</span>
+                        <i className="fa-solid fa-info-circle" title="Override the summarizer with MemU's summarizer. Extremely recommend to be checked."></i>
+                    </label>
                 </div>
             </div>
         </div>
