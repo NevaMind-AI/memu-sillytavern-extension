@@ -75,7 +75,6 @@ export async function retrieveMemories(summary: MemuSummary): Promise<void> {
             apiKey,
             memuExtras.baseInfo.userName,
             memuExtras.baseInfo.characterId,
-            false,
         );
         console.log('memu-ext: retrieve memories response', response);
         const retrieve = memuExtras.retrieve ?? {

@@ -1,12 +1,12 @@
 {
-    "display_name": "Template Extension",
+    "display_name": "MemU for SillyTavern",
     "loading_order": 1,
     "requires": [],
     "optional": [],
     "js": "dist/index.js",
     "css": "",
-    "author": "Cohee1207",
+    "author": "MemU",
     "version": "1.0.0",
-    "homePage": "https://github.com/Cohee1207/Extension-ReactTemplate",
+    "homePage": "https://github.com/NevaMind-AI/memu-sillytavern-extension",
     "auto_update": true
 }

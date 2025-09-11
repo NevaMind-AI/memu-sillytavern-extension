@@ -37,7 +37,6 @@ export async function retrieveDefaultCategories(
     apiKey: string,
     userId: string,
     agentId: string,
-    includeInactive: boolean,
 ): Promise<DefaultCategoriesResponse> {
     return request<DefaultCategoriesResponse>(
         '/retrieveDefaultCategories',
@@ -45,7 +44,6 @@ export async function retrieveDefaultCategories(
             apiKey: apiKey,
             userId: userId,
             agentId: agentId,
-            includeInactive: includeInactive,
         },
     );
 }

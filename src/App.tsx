@@ -74,7 +74,7 @@ function App() {
                 </div>
                 <div className="inline-drawer-content" style={{ display: 'flex', flexDirection: 'column' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', padding: '0 4px' }}>
-                        <span>API Key</span>
+                        <h4>API Key</h4>
                         <small>
                             <span>get your API key from <a href="https://app.memu.so/api-key" target="_blank" rel="noopener noreferrer">here</a></span>
                         </small>
@@ -103,17 +103,14 @@ function App() {
                             <FailIcon width={20} height={20} />
                         )}
                     </div>
-                </div>
-                <hr />
-                <div className="flex-container">
-                    <div style={{ display: 'flex', flexDirection: 'column', padding: '0 4px' }}>
-                        <span>Memory</span>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <h4>Memory</h4>
+                        <label className="checkbox_label expander" htmlFor="override_summarizer" title="Override Summarizer">
+                            <input id="override_summarizer" type="checkbox" className="checkbox" checked={overrideSummarizer} onChange={handleOverrideSummarizerChange} />
+                            <span>Override Summarizer</span>
+                            <i className="fa-solid fa-info-circle" title="Override the summarizer with MemU's summarizer. Extremely recommend to be checked."></i>
+                        </label>
                     </div>
-                    <label className="checkbox_label expander" htmlFor="override_summarizer" title="Override Summarizer">
-                        <input id="override_summarizer" type="checkbox" className="checkbox" checked={overrideSummarizer} onChange={handleOverrideSummarizerChange} />
-                        <span>Override Summarizer</span>
-                        <i className="fa-solid fa-info-circle" title="Override the summarizer with MemU's summarizer. Extremely recommend to be checked."></i>
-                    </label>
                 </div>
             </div>
         </div>
