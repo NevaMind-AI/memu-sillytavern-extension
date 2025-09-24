@@ -202,8 +202,8 @@ async function prepareConversationData(from: number, to: number): Promise<Conver
         }
 
         messages.push({
-            role: message.is_user ? message.name === memuExtras.baseInfo.userName ? 'user' : 'participant' : 'assistant',
-            name: message.is_user && message.name !== memuExtras.baseInfo.userName ? message.name : undefined,
+            role: chatItem.is_user ? chatItem.name === memuExtras.baseInfo.userName ? 'user' : 'participant' : 'assistant',
+            name: chatItem.is_user && chatItem.name !== memuExtras.baseInfo.userName ? chatItem.name : undefined,
             content: regexedMessage,
         });
     }));
