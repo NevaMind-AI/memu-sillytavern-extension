@@ -6,7 +6,7 @@ import { ToolManager } from '@silly-tavern/scripts/tool-calling.js';
 import { debounce } from "@silly-tavern/scripts/utils.js";
 import { appendFileContent } from '@silly-tavern/scripts/chats.js';
 import { getRegexedString, regex_placement } from '@silly-tavern/scripts/extensions/regex/engine.js';
-import { MEMU_LOCAL_STORAGE_API_KEY, MEMU_LOCAL_STORAGE_OVERRIDE_SUMMARIZER } from "./consts";
+import { MEMU_LOCAL_STORAGE_API_KEY, MEMU_LOCAL_STORAGE_AUTO_SUMMARY_BY_CONTEXT_SIZE, MEMU_LOCAL_STORAGE_OVERRIDE_SUMMARIZER, MEMU_LOCAL_STORAGE_SUMMARY_TURN } from "./consts";
 import { MemuBaseInfo, MemuExtras, MemuRetrieve, MemuSummary } from "./types";
 
 const originExtras: MemuExtras = {}
@@ -44,6 +44,16 @@ export const API_KEY = {
 export const OVERRIDE_SUMMARIZER = {
     get: () => localStorage.getItem(MEMU_LOCAL_STORAGE_OVERRIDE_SUMMARIZER) !== 'false',
     set: (value: boolean) => localStorage.setItem(MEMU_LOCAL_STORAGE_OVERRIDE_SUMMARIZER, value.toString()),
+}
+
+export const AUTO_SUMMARY_BY_CONTEXT_SIZE = {
+    get: () => localStorage.getItem(MEMU_LOCAL_STORAGE_AUTO_SUMMARY_BY_CONTEXT_SIZE) !== 'false',
+    set: (value: boolean) => localStorage.setItem(MEMU_LOCAL_STORAGE_AUTO_SUMMARY_BY_CONTEXT_SIZE, value.toString()),
+}
+
+export const SUMMARY_TURN = {
+    get: () => localStorage.getItem(MEMU_LOCAL_STORAGE_SUMMARY_TURN),
+    set: (value: number) => localStorage.setItem(MEMU_LOCAL_STORAGE_SUMMARY_TURN, value.toString()),
 }
 
 export const memuExtras = new Proxy<MemuExtras>(originExtras, {

@@ -1,21 +1,35 @@
 import { CategoryResponse } from "memu-js";
-import { API_KEY, memuExtras, st, Message, MessageCollection } from "utils/context-extra";
+import { API_KEY, memuExtras, st, Message, MessageCollection, AUTO_SUMMARY_BY_CONTEXT_SIZE, SUMMARY_TURN } from "utils/context-extra";
 import { memorizeConversation, retrieveDefaultCategories } from "utils/network";
 import { ConversationMessage, MemuSummary, MemuTaskStatus, STEventData } from "utils/types";
 import { sumTokens } from "./utils";
 
+let isSummarying = false;
 
 export async function summaryIfNeed(): Promise<void> {
-    const from = memuExtras.summary?.summaryRange?.[1] ?? 0;
-    const total = await sumTokens(from);
-    const chat = st.getContext().chat;
-
-    console.log('memu-ext: now token accumulated: %d, max context: %d', total, st.getChatMaxContextSize());
-    if (total < st.getChatMaxContextSize()) {
+    if (isSummarying) {
         return;
     }
 
-    await doSummary(from, chat.length - 1);
+    isSummarying = true;
+    const from = memuExtras.summary?.summaryRange?.[1] ?? 0;
+    const chat = st.getContext().chat;
+
+    if (AUTO_SUMMARY_BY_CONTEXT_SIZE.get()) {
+        const total = await sumTokens(from);
+        console.log('memu-ext: now token accumulated: %d, max context: %d', total, st.getChatMaxContextSize());
+        if (total >= st.getChatMaxContextSize()) {
+            await doSummary(from, chat.length - 1);
+        }
+    } else {
+        const summaryTurn = parseInt(SUMMARY_TURN.get());
+        const nowTurn = chat.length - from;
+        console.log('memu-ext: now turn: %d, summary turn: %d', nowTurn, summaryTurn);
+        if (nowTurn >= summaryTurn) {
+            await doSummary(from, chat.length - 1);
+        }
+    }
+    isSummarying = false;
 }
 
 export async function doSummary(from: number, to: number): Promise<void> {

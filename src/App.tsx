@@ -1,10 +1,10 @@
+import MemoryShowModal from "component/MemoryShowModal";
 import { onChatChanged, onChatCompletionPromptReady, onMessageEdited, onMessageReceived, onMessageSwiped } from "memory/exports";
 import { ChangeEvent, CSSProperties, useEffect, useState } from "react";
-import MemoryShowModal from "component/MemoryShowModal";
 import EyeIcon from "ui/icons";
 import MemuLogo from "ui/logo";
 import { FailIcon, LoadingIcon, SuccessIcon } from "ui/status";
-import { API_KEY, memuExtras, OVERRIDE_SUMMARIZER, st } from "utils/context-extra";
+import { API_KEY, AUTO_SUMMARY_BY_CONTEXT_SIZE, memuExtras, OVERRIDE_SUMMARIZER, st, SUMMARY_TURN } from "utils/context-extra";
 import { delay } from "utils/utils";
 
 const buttonStyle: CSSProperties = {
@@ -21,6 +21,8 @@ function App() {
     const [apiKey, setApiKey] = useState<string>('');
     const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const [overrideSummarizer, setOverrideSummarizer] = useState<boolean>(false);
+    const [autoSummaryByContextSize, setAutoSummaryByContextSize] = useState<boolean>(false);
+    const [summaryTurn, setSummaryTurn] = useState<number>(10);
     const [showMemoryModal, setShowMemoryModal] = useState<boolean>(false);
     const [memoryText, setMemoryText] = useState<string>('');
 
@@ -46,6 +48,10 @@ function App() {
     useEffect(() => {
         const saved = OVERRIDE_SUMMARIZER.get();
         if (saved !== null) setOverrideSummarizer(saved);
+        const savedAutoSummaryByContextSize = AUTO_SUMMARY_BY_CONTEXT_SIZE.get();
+        if (savedAutoSummaryByContextSize !== null) setAutoSummaryByContextSize(savedAutoSummaryByContextSize);
+        const savedSummaryTurn = SUMMARY_TURN.get();
+        if (savedSummaryTurn !== null) setSummaryTurn(parseInt(savedSummaryTurn));
     }, []);
 
     function handleChange(e: ChangeEvent<HTMLInputElement>) {
@@ -72,6 +78,16 @@ function App() {
     function handleOverrideSummarizerChange(e: ChangeEvent<HTMLInputElement>) {
         setOverrideSummarizer(e.target.checked);
         OVERRIDE_SUMMARIZER.set(e.target.checked);
+    }
+
+    function handleAutoSummaryByContextSizeChange(e: ChangeEvent<HTMLInputElement>) {
+        setAutoSummaryByContextSize(e.target.checked);
+        AUTO_SUMMARY_BY_CONTEXT_SIZE.set(e.target.checked);
+    }
+
+    function handleSummaryTurnChange(e: ChangeEvent<HTMLInputElement>) {
+        setSummaryTurn(parseInt(e.target.value));
+        SUMMARY_TURN.set(parseInt(e.target.value));
     }
 
     return (
@@ -123,13 +139,37 @@ function App() {
                                 <FailIcon width={20} height={20} />
                             )}
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <hr />
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                             <h4>Memory</h4>
                             <label className="checkbox_label expander" htmlFor="override_summarizer" title="Override Summarizer">
                                 <input id="override_summarizer" type="checkbox" className="checkbox" checked={overrideSummarizer} onChange={handleOverrideSummarizerChange} />
                                 <span>Override Summarizer</span>
                                 <i className="fa-solid fa-info-circle" title="Override the summarizer with MemU's summarizer. Extremely recommend to be checked."></i>
                             </label>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                <label className="checkbox_label expander" htmlFor="auto_summary_turn" title="Auto Summary Turn">
+                                    <input id="auto_summary_turn" type="checkbox" className="checkbox" checked={autoSummaryByContextSize} onChange={handleAutoSummaryByContextSizeChange} />
+                                    <span>Summary by Context Size</span>
+                                    {/* <i className="fa-solid fa-info-circle" title="Checked for auto summary by context size."></i> */}
+                                </label>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 8, paddingRight: 8 }}>
+                                    <label style={{ opacity: autoSummaryByContextSize ? 0.5 : 1 }}>
+                                        Summary Turn:
+                                        <span id="summary_turn_output">
+                                            {' ' + (autoSummaryByContextSize ? 'auto' : summaryTurn)}
+                                        </span>
+                                    </label>
+                                    <input
+                                        type="range"
+                                        disabled={autoSummaryByContextSize}
+                                        value={summaryTurn}
+                                        min="10"
+                                        max="999" step="1"
+                                        onChange={handleSummaryTurnChange}>
+                                    </input>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
