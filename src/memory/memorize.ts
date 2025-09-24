@@ -35,7 +35,7 @@ export async function doSummary(from: number, to: number): Promise<void> {
         const response = await memorizeConversation(
             apiKey,
             {
-                messages: prepareConversationData(),
+                messages: await prepareConversationData(from, to),
                 userId: memuExtras.baseInfo.userName,
                 userName: memuExtras.baseInfo.userName,
                 characterId: memuExtras.baseInfo.characterId,
@@ -157,23 +157,57 @@ function findSystemSummary(messages: MessageCollection): string {
 }
 
 function parseSummary(categories: CategoryResponse[]): string {
-    return categories.map(category => `[${category.name}] ${category.summary}`).join('\n');
+    return categories.map(category => `[${category.name}] ${category.summary}`).join('\n\n\n');
 }
 
-function prepareConversationData(): ConversationMessage[] {
+// function prepareConversationData(): ConversationMessage[] {
+//     const chat = st.getContext().chat;
+//     const chatInfo = memuExtras.baseInfo;
+//     if (!chatInfo) {
+//         throw new Error('memu-ext: chatInfo not found');
+//     }
+
+//     const messages: ConversationMessage[] = [];
+//     for (const message of chat) {
+//         messages.push({
+//             role: message.is_user ? message.name === chatInfo.userName ? 'user' : 'participant' : 'assistant',
+//             name: message.is_user && message.name !== chatInfo.userName ? message.name : undefined,
+//             content: message.mes,
+//         });
+//     }
+//     return messages;
+// }
+
+async function prepareConversationData(from: number, to: number): Promise<ConversationMessage[]> {
     const chat = st.getContext().chat;
     const chatInfo = memuExtras.baseInfo;
     if (!chatInfo) {
         throw new Error('memu-ext: chatInfo not found');
     }
 
+    const canUseTools = st.toolManager.isToolCallingSupported();
+    let coreChat = chat.slice(from, to).filter(x => !x.is_system || (canUseTools && Array.isArray(x.extra?.tool_invocations)));
+
     const messages: ConversationMessage[] = [];
-    for (const message of chat) {
+    await Promise.all(coreChat.map(async (chatItem, index) => {
+        let message = chatItem.mes;
+        let regexType = chatItem.is_user ? st.regex_placement.USER_INPUT : st.regex_placement.AI_OUTPUT;
+        let options = { isPrompt: true, depth: (coreChat.length - index - 1) };
+
+        let regexedMessage = st.getRegexedString(message, regexType, options);
+        regexedMessage = await st.appendFileContent(chatItem, regexedMessage);
+
+        if (chatItem?.extra?.append_title && chatItem?.extra?.title) {
+            regexedMessage = `${regexedMessage}\n\n${chatItem.extra.title}`;
+        }
+
         messages.push({
-            role: message.is_user ? message.name === chatInfo.userName ? 'user' : 'participant' : 'assistant',
-            name: message.is_user && message.name !== chatInfo.userName ? message.name : undefined,
-            content: message.mes,
+            role: message.is_user ? message.name === memuExtras.baseInfo.userName ? 'user' : 'participant' : 'assistant',
+            name: message.is_user && message.name !== memuExtras.baseInfo.userName ? message.name : undefined,
+            content: regexedMessage,
         });
-    }
+    }));
+
+    console.log('memu-ext: prepared conversation data', messages);
     return messages;
 }

@@ -1,8 +1,11 @@
 import { event_types, eventSource, getMaxContextSize, saveChat } from "@silly-tavern/script.js";
 import { debounce_timeout } from "@silly-tavern/scripts/constants.js";
-import { promptManager, Message, MessageCollection } from "@silly-tavern/scripts/openai.js";
+import { Message, MessageCollection, promptManager } from "@silly-tavern/scripts/openai.js";
 import { getContext } from "@silly-tavern/scripts/st-context.js";
+import { ToolManager } from '@silly-tavern/scripts/tool-calling.js';
 import { debounce } from "@silly-tavern/scripts/utils.js";
+import { appendFileContent } from '@silly-tavern/scripts/chats.js';
+import { getRegexedString, regex_placement } from '@silly-tavern/scripts/extensions/regex/engine.js';
 import { MEMU_LOCAL_STORAGE_API_KEY, MEMU_LOCAL_STORAGE_OVERRIDE_SUMMARIZER } from "./consts";
 import { MemuBaseInfo, MemuExtras, MemuRetrieve, MemuSummary } from "./types";
 
@@ -21,12 +24,17 @@ export const st = {
     eventSource: eventSource,
 
     promptManager: promptManager,
+    toolManager: ToolManager,
+
+    getRegexedString: getRegexedString,
+    regex_placement: regex_placement,
+    appendFileContent: appendFileContent,
 }
 
 export {
     Message,
-    MessageCollection,
-}
+    MessageCollection
+};
 
 export const API_KEY = {
     get: () => localStorage.getItem(MEMU_LOCAL_STORAGE_API_KEY),
