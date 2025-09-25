@@ -164,8 +164,8 @@ function App() {
                                         type="range"
                                         disabled={autoSummaryByContextSize}
                                         value={summaryTurn}
-                                        min="10"
-                                        max="999" step="1"
+                                        min="5"
+                                        max="1000" step="5"
                                         onChange={handleSummaryTurnChange}>
                                     </input>
                                 </div>
